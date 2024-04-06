@@ -1,0 +1,21 @@
+INVERTOR
+
+.include "models/fet.mod"
+
+VIN VDD 0 DC 1V
+
+VSIG in 0 PWL file "pwl_waveform.csv"
+
+M1 VDD in sig1 VDD p w=4.8u l=0.6u 
+
+M2 sig1 in 0 0 n w=2.4u l=0.6u 
+
+M3 VDD sig1 sig2 VDD p w=4.8u l=0.6u 
+
+M4 sig2 sig1 0 0 n w=2.4u l=0.6u 
+
+
+.TRAN 1ps 2ns
+* .DC VSIG 0 .7 0.1
+.PRINT TRAN FORMAT=CSV V(in) V(sig1)
+
