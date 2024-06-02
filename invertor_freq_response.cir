@@ -1,24 +1,64 @@
 INVERTOR
 
 .include "models/fet.mod"
+* .include "models/transmision_line.mod"
 
-VIN VDD 0 DC 1V
+.param FREQUENCY=100000Hz
 
-VSIG in 0 PWL file "pwl_waveform.csv"
+.STEP DEC FREQUENCY 100000Hz 1GHz 1
 
+.param CABLE_LENGTH=10
+* .STEP LIN CABLE_LENGTH 5 10 1
+
+
+.param PERIOD={1/FREQUENCY}
+.param EDGE_TRANSIENT_TIME={ PERIOD / 5}
+
+.MODEL coax_lossy LTRA(R=0.2 L=700n
+    + C=3p
+    + LEN={CABLE_LENGTH})
+
+
+
+VIN VDD 0 DC 5V
+* VSIG in 0 PWL file "pwl_waveform.csv"
+VSIG in 0 PWL {PERIOD * 0} 0V {EDGE_TRANSIENT_TIME} 5V {PERIOD * 0.5} 5V {PERIOD * 0.5 + EDGE_TRANSIENT_TIME} 0V
+            + {PERIOD * 1} 0V {PERIOD * 1 + EDGE_TRANSIENT_TIME} 5V { PERIOD * 1.5 } 5V {PERIOD * 1.5 + EDGE_TRANSIENT_TIME} 0V
+            + {PERIOD * 2} 0V {PERIOD * 2 + EDGE_TRANSIENT_TIME} 5V { PERIOD * 2.5 } 5V {PERIOD * 2.5 + EDGE_TRANSIENT_TIME} 0V
+            
+* VSIG in 0 AC 5V 0
 
 * Invertor 1
 M1 VDD in sig1 VDD p w=4.8u l=0.6u 
 
 M2 sig1 in 0 0 n w=2.4u l=0.6u 
 
+* P1 sig1 0 port=1
+* P2 sig1out 0 port=2
+* ytransline line1 P1 P2 coax_lumped len=50u lumps=5000
+
+O1 sig1 0 sig1out 0 coax_lossy
+
+
 * Invertor 2
-M3 VDD sig1 sig2 VDD p w=4.8u l=0.6u 
+M3 VDD sig1out sig2 VDD p w=4.8u l=0.6u 
 
-M4 sig2 sig1 0 0 n w=2.4u l=0.6u 
+M4 sig2 sig1out 0 0 n w=2.4u l=0.6u 
 
 
-.TRAN 1ps 50ns
-* .DC VSIG 0 .7 0.1
-.PRINT TRAN FORMAT=CSV V(in) V(sig2)
 
+
+* Add a transmision line.
+
+.TRAN 1ps {1 / FREQUENCY}
+* .AC DEC 10000 1Hz 1GHz
+.PRINT TRAN FORMAT=CSV V(in) V(sig1) V(sig1out) 
+
+
+
+* Hertz Sweep
+
+* Voltage range as freq increases.
+* 1 / sqrt(2) * input range
+
+*Sum of N vs P and trans
