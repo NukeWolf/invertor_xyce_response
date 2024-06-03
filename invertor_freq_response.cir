@@ -7,17 +7,19 @@ INVERTOR
 
 .STEP DEC FREQUENCY 100000Hz 1GHz 1
 
-.param CABLE_LENGTH=10
-* .STEP LIN CABLE_LENGTH 5 10 1
-
+.param CABLE_LENGTH=5
+* .STEP LIN CABLE_LENGTH 1 10 1
+* .STEP CABLE_LENGTH LIST 1 5 10
 
 .param PERIOD={1/FREQUENCY}
 .param EDGE_TRANSIENT_TIME={ PERIOD / 5}
 
-.MODEL coax_lossy LTRA(R=0.2 L=700n
+.MODEL coax_lossy LTRA(R=252E-6 L=700n
     + C=3p
     + LEN={CABLE_LENGTH})
 
+.model rg58a LTRA( L=252n C=101p R=252E-6 LEN={CABLE_LENGTH})
+* G=101E-8
 
 
 VIN VDD 0 DC 5V
@@ -50,9 +52,9 @@ M4 sig2 sig1out 0 0 n w=2.4u l=0.6u
 
 * Add a transmision line.
 
-.TRAN 1ps {1 / FREQUENCY}
+.TRAN 1ps {3 / FREQUENCY}
 * .AC DEC 10000 1Hz 1GHz
-.PRINT TRAN FORMAT=CSV V(in) V(sig1) V(sig1out) 
+.PRINT TRAN FORMAT=CSV V(in) V(sig1) V(sig1out) V(sig2)
 
 
 

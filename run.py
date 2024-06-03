@@ -3,6 +3,80 @@ from matplotlib import pyplot as plt
 import subprocess
 import os.path
 
+from config import *
+from util import format_frequency
+
+
+# Run Xyce Sim
+if (not os.path.isfile(RESULTS_FILENAME)):
+    out = subprocess.check_output(["xyce", CIR_FILENAME])
+    print(out)
+
+
+# Get simulation parameters
+df = pd.read_table(OUTPUT_STEP_PARAMETERS_FILENAME,sep="\s+", skipfooter=1)
+
+simulation_parameters = []
+
+for index, row in df.iterrows():
+    parameters = {}
+    for column_name in df.columns:
+        if column_name != "STEP":
+            parameters[column_name] = row[column_name]
+    simulation_parameters.append(parameters)
+
+print(simulation_parameters)
+
+# Plot results
+df = pd.read_csv(RESULTS_FILENAME)
+
+split_dfs = []
+
+# Initialize variables to keep track of the split indices
+start_index = 0
+
+# Iterate through and split seperate transient analysis.
+for index, row in df.iterrows():
+    timestamp = row['TIME']
+    if timestamp == 0.0 and index != 0:
+        split_dfs.append(df.iloc[start_index:index])
+        start_index = index
+split_dfs.append(df.iloc[start_index:])
+
+
+NUM_PLOTS = PLOT_ROWS * PLOT_COLS
+figure, axis = plt.subplots(PLOT_ROWS, PLOT_COLS) 
+
+index = 0
+print(split_dfs)
+for parameter, rows in zip(simulation_parameters,split_dfs):
+    if index >= NUM_PLOTS:
+        continue
+
+    num_cols = range(1,rows.shape[1])
+    time_vals = rows.iloc[:,0]
+    voltage_lines = [rows.iloc[:,x] for x in num_cols]
+    row = index // PLOT_COLS
+    col = index - row * PLOT_COLS
+    
+    title = "\n"
+    for key in parameter:
+        if key == "FREQUENCY":
+            parameter[key] = format_frequency(parameter[key])
+        title += f"{key}: {parameter[key]} "
+    axis[row,col].set_title(title,fontsize=10)
+    
+    for line in voltage_lines:
+        axis[row,col].plot(time_vals, line, label = line.name) 
+    index+=1
+
+
+axis[0,0].legend() 
+plt.show()
+
+
+
+
 # waveform_root_name = "pwl_waveform"
 # VDD = 5
 # cycle_count = 5
@@ -25,35 +99,3 @@ import os.path
 
 # print(parameters)
 # parameters.to_csv("parameters.csv", index=False, sep=' ')
-    
-
-
-# Run Xyce Sim
-result_file_name = "result"
-cir_file = "invertor_freq_response.cir"
-if (not os.path.isfile("result.prn")):
-    out = subprocess.check_output(["xyce", cir_file])
-    print(out)
-
-df = pd.read_table("invertor_freq_response.cir.res",sep="\s+")
-print(df)
-
-
-# Plot results
-df = pd.read_csv("invertor_freq_response.cir.csv")
-print(df)
-num_cols = range(1,df.shape[1])
-
-x_vals = df.iloc[:,0]
-lines = [df.iloc[:,x] for x in num_cols]
-  
-  
-  
-figure, axis = plt.subplots(2, 2) 
-
-# plot lines 
-for line in lines:
-    plt.plot(x_vals, line, label = line.name) 
-
-plt.legend() 
-plt.show()

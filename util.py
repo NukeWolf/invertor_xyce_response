@@ -39,3 +39,12 @@ def generate_pwl_csv(filename, frequency, transient_timing, cycle_count=5, vdd=5
     pwl_df.to_csv(filename, index=False, header=None, sep=' ')
 
     print(f"PWL CSV file '{filename}' generated successfully.")
+
+def format_frequency(frequency):
+    if frequency >= 1e9:  # If frequency is greater than or equal to 1 GHz
+        formatted_frequency = f'{frequency / 1e9:.2f} GHz'
+    elif frequency >= 1e6:  # If frequency is greater than or equal to 1 MHz
+        formatted_frequency = f'{frequency / 1e6:.2f} MHz'
+    else:
+        formatted_frequency = f'{frequency} Hz'
+    return formatted_frequency
