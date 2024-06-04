@@ -29,27 +29,31 @@ print(simulation_parameters)
 
 # Plot results
 df = pd.read_csv(RESULTS_FILENAME)
-
-split_dfs = []
+split_runs = []
 
 # Initialize variables to keep track of the split indices
 start_index = 0
 
-# Iterate through and split seperate transient analysis.
+# Iterate through and split seperate transient analysis runs.
 for index, row in df.iterrows():
     timestamp = row['TIME']
     if timestamp == 0.0 and index != 0:
-        split_dfs.append(df.iloc[start_index:index])
+        split_runs.append(df.iloc[start_index:index])
         start_index = index
-split_dfs.append(df.iloc[start_index:])
+# Last Run
+split_runs.append(df.iloc[start_index:])
 
 
+
+# Plotting
 NUM_PLOTS = PLOT_ROWS * PLOT_COLS
 figure, axis = plt.subplots(PLOT_ROWS, PLOT_COLS) 
 
 index = 0
-print(split_dfs)
-for parameter, rows in zip(simulation_parameters,split_dfs):
+print(split_runs)
+
+# Iterate through every run and corresponding parameters
+for parameter, rows in zip(simulation_parameters,split_runs):
     if index >= NUM_PLOTS:
         continue
 
