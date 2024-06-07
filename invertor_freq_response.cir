@@ -2,10 +2,12 @@ INVERTOR
 
 .include "models/fet.mod"
 * .include "models/transmision_line.mod"
+.include "parameters.lib"
 
 .param FREQUENCY=100000Hz
-
 .STEP DEC FREQUENCY 100000Hz 1GHz 1
+* .param FREQUENCY=1GHz
+
 
 .param CABLE_LENGTH=5
 * .STEP LIN CABLE_LENGTH 1 10 1
@@ -18,7 +20,17 @@ INVERTOR
     + C=3p
     + LEN={CABLE_LENGTH})
 
-.model rg58a LTRA( L=252n C=101p R=252E-6 LEN={CABLE_LENGTH})
+.MODEL coax_lumped transline(R=252E-6 L=700n
+    + C=3p)
+
+.MODEL rg58a LTRA( L=252n C=101p R=252E-6 LEN={CABLE_LENGTH})
+
+.model rg58_elev transline(elev=3
+ + zk=50 capl=30.8p clen=1ft vrel=0.66
+ + fr1=100meg at1=5.3db atlen=100ft )
+
+
+
 * G=101E-8
 
 
@@ -35,11 +47,9 @@ M1 VDD in sig1 VDD p w=4.8u l=0.6u
 
 M2 sig1 in 0 0 n w=2.4u l=0.6u 
 
-* P1 sig1 0 port=1
-* P2 sig1out 0 port=2
-* ytransline line1 P1 P2 coax_lumped len=50u lumps=5000
+ytransline line1 sig1 sig1out rg58_elev len=5 lumps=1000
 
-O1 sig1 0 sig1out 0 coax_lossy
+* O1 sig1 0 sig1out 0 coax_lossy
 
 
 * Invertor 2
@@ -49,8 +59,6 @@ M4 sig2 sig1out 0 0 n w=2.4u l=0.6u
 
 
 
-
-* Add a transmision line.
 
 .TRAN 1ps {3 / FREQUENCY}
 * .AC DEC 10000 1Hz 1GHz

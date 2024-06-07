@@ -1,0 +1,4 @@
+*.csv
+*.prn
+*.res
+__pycache__
